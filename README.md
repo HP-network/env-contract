@@ -18,7 +18,7 @@ LOG_LEVEL=info # env-contract: enum(debug|info|warn|error) optional
 Validate a local `.env` file:
 
 ```sh
-python -m pip install env-contract
+python -m pip install git+https://github.com/HP-network/env-contract.git
 env-contract .env.contract --env-file .env
 ```
 
