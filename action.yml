@@ -1,0 +1,31 @@
+name: Environment contract
+description: Validate environment variables against a readable contract file
+inputs:
+  contract:
+    description: Path to the contract file
+    required: false
+    default: .env.contract
+  env-file:
+    description: Path to the dotenv file used for validation
+    required: false
+    default: .env
+  format:
+    description: Output format (markdown or sarif)
+    required: false
+    default: markdown
+runs:
+  using: composite
+  steps:
+    - id: validate
+      shell: bash
+      run: |
+        set -o pipefail
+        PYTHONPATH="${GITHUB_ACTION_PATH}/src" python -m env_contract \
+          "${{ inputs.contract }}" \
+          --env-file "${{ inputs.env-file }}" \
+          --allow-missing-env-file \
+          --no-process-env \
+          --format "${{ inputs.format }}" | tee env-contract-report.${{ inputs.format }}
+    - if: always() && (inputs.format == 'markdown')
+      shell: bash
+      run: cat env-contract-report.markdown >> "$GITHUB_STEP_SUMMARY"
