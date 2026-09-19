@@ -13,6 +13,14 @@ inputs:
     description: Output format (markdown or sarif)
     required: false
     default: markdown
+  allow-missing-required:
+    description: Keep CI templates useful without requiring API keys or local-only values.
+    required: false
+    default: 'true'
+  upload-sarif:
+    description: Upload a SARIF report to code scanning when format is sarif.
+    required: false
+    default: 'false'
 runs:
   using: composite
   steps:
@@ -20,12 +28,15 @@ runs:
       shell: bash
       run: |
         set -o pipefail
-        PYTHONPATH="${GITHUB_ACTION_PATH}/src" python -m env_contract \
-          "${{ inputs.contract }}" \
-          --env-file "${{ inputs.env-file }}" \
-          --allow-missing-env-file \
-          --no-process-env \
-          --format "${{ inputs.format }}" | tee env-contract-report.${{ inputs.format }}
+        args=("${{ inputs.contract }}" --env-file "${{ inputs['env-file'] }}" --allow-missing-env-file --no-process-env --format "${{ inputs.format }}")
+        if [[ "${{ inputs['allow-missing-required'] }}" == "true" ]]; then
+          args+=(--allow-missing-required)
+        fi
+        PYTHONPATH="${GITHUB_ACTION_PATH}/src" python -m env_contract "${args[@]}" | tee "env-contract-report.${{ inputs.format }}"
     - if: always() && (inputs.format == 'markdown')
       shell: bash
       run: cat env-contract-report.markdown >> "$GITHUB_STEP_SUMMARY"
+    - if: always() && (inputs.format == 'sarif' && inputs['upload-sarif'] == 'true')
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: env-contract-report.sarif

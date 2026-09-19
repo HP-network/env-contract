@@ -33,19 +33,18 @@ def _type_error(entry: ContractEntry, value: str) -> str | None:
 
 
 def validate(contract_path: Path, env_path: Path | None = None, *, include_process_env: bool = True,
-             allow_missing_env_file: bool = False) -> Report:
+             allow_missing_env_file: bool = False, allow_missing_required: bool = False) -> Report:
     entries, contract_findings = parse_contract(contract_path)
-    values: dict[str, str] = {}
+    file_values: dict[str, str] = {}
     env_findings: list[Finding] = []
     used_env_path: str | None = None
     if env_path is not None:
         if env_path.exists():
-            values, env_findings = parse_env_file(env_path)
+            file_values, env_findings = parse_env_file(env_path)
             used_env_path = str(env_path)
         elif not allow_missing_env_file:
             env_findings = [Finding("error", "env-missing", f"environment file does not exist: {env_path}")]
-    if include_process_env:
-        values = {**values, **os.environ}
+    values = {**file_values, **(dict(os.environ) if include_process_env else {})}
 
     findings = [*contract_findings, *env_findings]
     declared = {entry.name for entry in entries}
@@ -54,7 +53,7 @@ def validate(contract_path: Path, env_path: Path | None = None, *, include_proce
         if value is None or value == "":
             if entry.default is not None:
                 value = entry.default
-            elif entry.required:
+            elif entry.required and not allow_missing_required:
                 findings.append(Finding("error", "missing", f"required variable '{entry.name}' is missing", entry.name, entry.line))
                 continue
             else:
@@ -63,7 +62,8 @@ def validate(contract_path: Path, env_path: Path | None = None, *, include_proce
         if error:
             findings.append(Finding("error", "invalid", f"'{entry.name}' {error}", entry.name, entry.line))
 
-    for name in sorted(set(values) - declared):
+    # Ignore unrelated shell and CI variables; only file values are documented here.
+    for name in sorted(set(file_values) - declared):
         if name.startswith("_"):
             continue
         findings.append(Finding("warning", "undocumented", f"variable '{name}' is not declared in the contract", name))

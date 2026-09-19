@@ -74,6 +74,8 @@ def parse_contract(path: Path) -> tuple[list[ContractEntry], list[Finding]]:
             findings.append(Finding(finding.level, finding.code, finding.message, name, finding.line))
         default = metadata_default if metadata_default is not None else (value or None)
         required = required_override if required_override is not None else not bool(value)
+        if value_type == "secret" and default is not None:
+            findings.append(Finding("error", "secret-default", f"secret '{name}' must not have a default in the contract", name, line_number))
         if value_type == "url" and default and not (default.startswith("http://") or default.startswith("https://")):
             findings.append(Finding("warning", "default-type", f"default for '{name}' does not look like a URL", name, line_number))
         if value_type == "bool" and default and default.lower() not in BOOL_VALUES:
@@ -108,5 +110,7 @@ def parse_env_file(path: Path) -> tuple[dict[str, str], list[Finding]]:
             value = value[1:-1]
         elif " #" in value:
             value = value.split(" #", 1)[0].rstrip()
+        if name in values:
+            findings.append(Finding("error", "duplicate-env-name", f"variable '{name}' appears more than once", name, line_number))
         values[name] = value
     return values, findings

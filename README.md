@@ -4,6 +4,8 @@ Validate the configuration a project expects before it reaches runtime.
 
 `env-contract` reads a small `.env.contract` file, checks values from a dotenv file and the current process, and emits text, JSON, Markdown, or SARIF. It uses only the Python standard library and never prints variable values.
 
+It includes presets for OpenAI, Anthropic, Gemini, Azure OpenAI, Ollama, OpenRouter, DeepSeek, Groq, Mistral, LM Studio, and other OpenAI-compatible endpoints. Presets generate a contract without putting an API key in the file.
+
 ## Quick start
 
 Create `.env.contract`:
@@ -26,6 +28,17 @@ The process environment takes precedence over values in `--env-file`. Use `--no-
 
 Supported types are `string`, `int`, `float`, `bool`, `url`, and `secret`. Add `enum(a|b|c)` to restrict a value. Missing variables marked `required` fail the command; undeclared variables are warnings.
 
+List the AI presets or generate a contract and example file:
+
+```sh
+env-contract --list-providers
+env-contract --init openai-compatible --output .env.contract --example-output .env.example
+```
+
+With no explicit `--example-output`, `--init` writes `.env.example` alongside the contract when using the default output path.
+
+Use `--force` to replace generated files. Required values are strict by default. CI templates can opt into `--allow-missing-required`; provided values are still type-checked. Secrets never accept contract defaults.
+
 ## CI output
 
 ```sh
@@ -37,9 +50,12 @@ The repository also ships a composite GitHub Action. It checks the contract with
 ```yaml
 steps:
   - uses: actions/checkout@v4
-  - uses: HP-network/env-contract@v1
+  - uses: HP-network/env-contract@v2
     with:
       env-file: .env.example
+      allow-missing-required: 'true'
+      format: sarif
+      upload-sarif: 'true'
 ```
 
 Use `--format json` for scripts and `--format markdown` for job summaries. Exit status is `0` when there are no errors and `1` when a contract or value is invalid.
