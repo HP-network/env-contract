@@ -52,12 +52,13 @@ The repository also ships a composite GitHub Action. It checks the contract with
 ```yaml
 steps:
   - uses: actions/checkout@v4
-  - uses: HP-network/env-contract@v2
-    with:
-      env-file: .env.example
-      allow-missing-required: 'true'
-      format: sarif
-      upload-sarif: 'true'
+      - uses: HP-network/env-contract@v2
+        with:
+          env-file: .env.example
+          allow-missing-required: 'true'
+          strict-undocumented: 'true'
+          format: sarif
+          upload-sarif: 'true'
 ```
 
 Use `--format json` for scripts and `--format markdown` for job summaries. Exit status is `0` when there are no errors and `1` when a contract or value is invalid.

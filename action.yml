@@ -17,6 +17,10 @@ inputs:
     description: Keep CI templates useful without requiring API keys or local-only values.
     required: false
     default: 'true'
+  strict-undocumented:
+    description: Treat dotenv variables missing from the contract as errors.
+    required: false
+    default: 'false'
   upload-sarif:
     description: Upload a SARIF report to code scanning when format is sarif.
     required: false
@@ -31,6 +35,9 @@ runs:
         args=("${{ inputs.contract }}" --env-file "${{ inputs['env-file'] }}" --allow-missing-env-file --no-process-env --format "${{ inputs.format }}")
         if [[ "${{ inputs['allow-missing-required'] }}" == "true" ]]; then
           args+=(--allow-missing-required)
+        fi
+        if [[ "${{ inputs['strict-undocumented'] }}" == "true" ]]; then
+          args+=(--strict-undocumented)
         fi
         PYTHONPATH="${GITHUB_ACTION_PATH}/src" python -m env_contract "${args[@]}" | tee "env-contract-report.${{ inputs.format }}"
     - if: always() && (inputs.format == 'markdown')
