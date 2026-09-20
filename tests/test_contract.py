@@ -76,6 +76,16 @@ class ContractTests(unittest.TestCase):
         self.assertIn("secret-default", {finding.code for finding in report.errors})
         self.assertIn("duplicate-env-name", {finding.code for finding in report.errors})
 
+    def test_undocumented_variables_can_be_strict(self) -> None:
+        contract, env = self.write_files(
+            "PORT=8080 # env-contract: int\n",
+            "PORT=8080\nEXTRA=value\n",
+        )
+        with patch.dict(os.environ, {}, clear=True):
+            report = validate(contract, env, include_process_env=False, strict_undocumented=True)
+        self.assertFalse(report.valid)
+        self.assertEqual([finding.code for finding in report.errors], ["undocumented"])
+
     def test_provider_preset_is_secret_safe(self) -> None:
         preset = get_provider("openai-compatible")
         self.assertIn("AI_API_KEY=", preset.contract)

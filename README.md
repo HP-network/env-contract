@@ -45,6 +45,8 @@ Use `--force` to replace generated files. Required values are strict by default.
 env-contract .env.contract --env-file .env.example --no-process-env --format sarif > env-contract.sarif
 ```
 
+Use `--strict-undocumented` when every variable in the dotenv file must be declared by the contract. The default keeps undeclared variables as warnings for compatibility with existing CI and local files.
+
 The repository also ships a composite GitHub Action. It checks the contract without requiring secrets to be present in CI:
 
 ```yaml

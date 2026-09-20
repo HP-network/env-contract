@@ -22,6 +22,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--no-process-env", action="store_true", help="do not merge variables from the current process")
     parser.add_argument("--allow-missing-env-file", action="store_true", help="validate the contract when the dotenv file is absent")
     parser.add_argument("--allow-missing-required", action="store_true", help="do not fail when required values are absent")
+    parser.add_argument("--strict-undocumented", action="store_true", help="treat variables absent from the contract as errors")
     return parser
 
 
@@ -54,6 +55,7 @@ def main(argv: list[str] | None = None) -> int:
         include_process_env=not args.no_process_env,
         allow_missing_env_file=args.allow_missing_env_file,
         allow_missing_required=args.allow_missing_required,
+        strict_undocumented=args.strict_undocumented,
     )
     output = {"text": as_text, "json": as_json, "markdown": as_markdown, "sarif": as_sarif}[args.format](report)
     print(output)

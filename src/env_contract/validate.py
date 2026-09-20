@@ -33,7 +33,8 @@ def _type_error(entry: ContractEntry, value: str) -> str | None:
 
 
 def validate(contract_path: Path, env_path: Path | None = None, *, include_process_env: bool = True,
-             allow_missing_env_file: bool = False, allow_missing_required: bool = False) -> Report:
+             allow_missing_env_file: bool = False, allow_missing_required: bool = False,
+             strict_undocumented: bool = False) -> Report:
     entries, contract_findings = parse_contract(contract_path)
     file_values: dict[str, str] = {}
     env_findings: list[Finding] = []
@@ -66,5 +67,10 @@ def validate(contract_path: Path, env_path: Path | None = None, *, include_proce
     for name in sorted(set(file_values) - declared):
         if name.startswith("_"):
             continue
-        findings.append(Finding("warning", "undocumented", f"variable '{name}' is not declared in the contract", name))
+        findings.append(Finding(
+            "error" if strict_undocumented else "warning",
+            "undocumented",
+            f"variable '{name}' is not declared in the contract",
+            name,
+        ))
     return Report(str(contract_path), used_env_path, len(entries), findings)
