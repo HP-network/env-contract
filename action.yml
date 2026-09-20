@@ -44,6 +44,6 @@ runs:
       shell: bash
       run: cat env-contract-report.markdown >> "$GITHUB_STEP_SUMMARY"
     - if: always() && (inputs.format == 'sarif' && inputs['upload-sarif'] == 'true')
-      uses: github/codeql-action/upload-sarif@v3
+      uses: github/codeql-action/upload-sarif@0fa1882f994fbd81a47ab0804f93354f5ea40147 # v3.28.17
       with:
         sarif_file: env-contract-report.sarif
